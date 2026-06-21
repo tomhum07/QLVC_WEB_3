@@ -3,6 +3,7 @@
 <%@ page import="com.example.model.M_VienChuc" %>
 <%@ page import="com.example.model.M_KeHoachHeader" %>
 <%@ page import="com.example.model.M_KeHoachDetail" %>
+<%@ page import="com.example.model.M_Bcdvc" %>
 <%@ page import="java.util.List" %>
 <!DOCTYPE html>
 <html>
@@ -112,9 +113,28 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
             <a class="navbar-brand fw-bold" href="home">Hệ Thống QLVC - Admin</a>
-            <div class="navbar-nav ms-auto">
-                <span class="navbar-text me-3 text-light">Xin chào Admin, <strong><%= currentUser.getFullName() %></strong></span>
-                <a class="btn btn-outline-light btn-sm rounded-pill px-3" href="login?action=logout">Đăng xuất</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarAdmin">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarAdmin">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link active fw-bold text-warning" href="quanlykehoach?msvc=<%= selectedMsvc != null ? selectedMsvc : "" %>&namhoc=<%= response.encodeURL(selectedNamHoc != null ? selectedNamHoc : "") %>">Quản Lý Kế Hoạch</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="quanlythuchien?msvc=<%= selectedMsvc != null ? selectedMsvc : "" %>&namhoc=<%= response.encodeURL(selectedNamHoc != null ? selectedNamHoc : "") %>">Quản Lý Thực Hiện</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="quanlydanhgia?msvc=<%= selectedMsvc != null ? selectedMsvc : "" %>&namhoc=<%= response.encodeURL(selectedNamHoc != null ? selectedNamHoc : "") %>">Đánh Giá Viên Chức</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="thongke?namhoc=<%= response.encodeURL(selectedNamHoc != null ? selectedNamHoc : "") %>">Thống Kê Đánh Giá</a>
+                    </li>
+                </ul>
+                <div class="navbar-nav ms-auto align-items-center">
+                    <span class="navbar-text me-3 text-light">Xin chào Admin, <strong><%= currentUser.getFullName() %></strong></span>
+                    <a class="btn btn-outline-light btn-sm rounded-pill px-3" href="login?action=logout">Đăng xuất</a>
+                </div>
             </div>
         </div>
     </nav>
@@ -226,7 +246,14 @@
                             
                             <div class="col-md-3">
                                 <label class="form-label fw-semibold text-secondary">Danh hiệu đăng ký</label>
-                                <input type="text" name="danhhieu" class="form-control form-control-sm" value="<%= header.getDanhhieu() != null ? header.getDanhhieu() : "" %>" placeholder="Chiến sĩ thi đua, lao động...">
+                                <% String currentDH = header.getDanhhieu() != null ? header.getDanhhieu() : ""; %>
+                                <select name="danhhieu" class="form-select form-select-sm">
+                                    <option value="" <%= currentDH.isEmpty() ? "selected" : "" %>>-- Chọn danh hiệu --</option>
+                                    <option value="Lao động tiên tiến" <%= "Lao động tiên tiến".equals(currentDH) ? "selected" : "" %>>Lao động tiên tiến</option>
+                                    <option value="Chiến sĩ thi đua cấp cơ sở" <%= "Chiến sĩ thi đua cấp cơ sở".equals(currentDH) ? "selected" : "" %>>Chiến sĩ thi đua cấp cơ sở</option>
+                                    <option value="Chiến sĩ thi đua cấp Bộ" <%= "Chiến sĩ thi đua cấp Bộ".equals(currentDH) ? "selected" : "" %>>Chiến sĩ thi đua cấp Bộ</option>
+                                    <option value="Chiến sĩ thi đua toàn quốc" <%= "Chiến sĩ thi đua toàn quốc".equals(currentDH) ? "selected" : "" %>>Chiến sĩ thi đua toàn quốc</option>
+                                </select>
                             </div>
                             
                             <div class="col-md-3">

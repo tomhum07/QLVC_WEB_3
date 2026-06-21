@@ -134,7 +134,8 @@ public class M_PlanDAO {
      */
     public List<M_KeHoachDetail> getKeHoachDetails(String mskhvc) {
         List<M_KeHoachDetail> list = new ArrayList<>();
-        String sql = "SELECT mskhvc, muc, congviec, kehoachthuchien, chitieu, thoigiankh, sanphamkh, ghichu, kiemtra " +
+        String sql = "SELECT mskhvc, muc, congviec, kehoachthuchien, chitieu, thoigiankh, sanphamkh, ghichu, kiemtra, " +
+                     "thoigianth, sanphamth, ketqua, minhchung, tuxacnhan, donvixacnhan " +
                      "FROM chitietkhthvcgv " +
                      "WHERE mskhvc = ? " +
                      "ORDER BY muc";
@@ -152,7 +153,13 @@ public class M_PlanDAO {
                         rs.getString("thoigiankh"),
                         rs.getString("sanphamkh"),
                         rs.getString("ghichu"),
-                        rs.getString("kiemtra")
+                        rs.getString("kiemtra"),
+                        rs.getString("thoigianth"),
+                        rs.getString("sanphamth"),
+                        rs.getString("ketqua"),
+                        rs.getString("minhchung"),
+                        rs.getString("tuxacnhan"),
+                        rs.getString("donvixacnhan")
                     ));
                 }
             }
@@ -236,6 +243,49 @@ public class M_PlanDAO {
             ps.setString(7, detail.getKiemtra());
             ps.setString(8, detail.getMskhvc());
             ps.setString(9, detail.getMuc());
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    /**
+     * Cập nhật số liệu thực hiện thực tế của viên chức (Thực hiện) và tự động đặt tuxacnhan = '1'
+     */
+    public boolean updateThucHienDetail(M_KeHoachDetail detail) {
+        String sql = "UPDATE chitietkhthvcgv " +
+                     "SET thoigianth = ?, sanphamth = ?, minhchung = ?, tuxacnhan = '1' " +
+                     "WHERE mskhvc = ? AND muc = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, detail.getThoigianth());
+            ps.setString(2, detail.getSanphamth());
+            ps.setString(3, detail.getMinhchung());
+            ps.setString(4, detail.getMskhvc());
+            ps.setString(5, detail.getMuc());
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    /**
+     * Admin cập nhật chi tiết thực hiện và trạng thái xác nhận của đơn vị
+     */
+    public boolean updateThucHienDetailByAdmin(M_KeHoachDetail detail) {
+        String sql = "UPDATE chitietkhthvcgv " +
+                     "SET thoigianth = ?, sanphamth = ?, minhchung = ?, donvixacnhan = ? " +
+                     "WHERE mskhvc = ? AND muc = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, detail.getThoigianth());
+            ps.setString(2, detail.getSanphamth());
+            ps.setString(3, detail.getMinhchung());
+            ps.setString(4, detail.getDonvixacnhan());
+            ps.setString(5, detail.getMskhvc());
+            ps.setString(6, detail.getMuc());
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -485,5 +535,222 @@ public class M_PlanDAO {
             e.printStackTrace();
         }
         return list;
+    }
+
+    /**
+     * Lưu hoặc cập nhật Bảng đánh giá chất lượng viên chức (bcdvc)
+     */
+    public boolean saveBcdvc(M_Bcdvc bcd) {
+        String checkSql = "SELECT COUNT(*) FROM bcdvc WHERE msvc = ? AND namhoc = ?";
+        String updateSql = "UPDATE bcdvc SET tongdiem = ?, tuxeploai = ?, capthamquyenxeploai = ?, duyet = ?, nhanxetctq = ? " +
+                           "WHERE msvc = ? AND namhoc = ?";
+        String insertSql = "INSERT INTO bcdvc (msbcdvc, msvc, namhoc, ngay, tongdiem, tuxeploai, capthamquyenxeploai, duyet, nhanxetctq) " +
+                           "VALUES (?, ?, ?, CURRENT_DATE(), ?, ?, ?, ?, ?)";
+        
+        try (Connection conn = DBConnection.getConnection()) {
+            boolean exists = false;
+            try (PreparedStatement psCheck = conn.prepareStatement(checkSql)) {
+                psCheck.setString(1, bcd.getMsvc());
+                psCheck.setString(2, bcd.getNamhoc());
+                try (ResultSet rs = psCheck.executeQuery()) {
+                    if (rs.next() && rs.getInt(1) > 0) {
+                        exists = true;
+                    }
+                }
+            }
+            
+            if (exists) {
+                try (PreparedStatement psUpdate = conn.prepareStatement(updateSql)) {
+                    psUpdate.setInt(1, bcd.getTongdiem());
+                    psUpdate.setString(2, bcd.getTuxeploai());
+                    psUpdate.setString(3, bcd.getCapthamquyenxeploai());
+                    psUpdate.setString(4, bcd.getDuyet());
+                    psUpdate.setString(5, bcd.getNhanxetctq());
+                    psUpdate.setString(6, bcd.getMsvc());
+                    psUpdate.setString(7, bcd.getNamhoc());
+                    return psUpdate.executeUpdate() > 0;
+                }
+            } else {
+                String msbcdvc = generateMsbcdvc();
+                try (PreparedStatement psInsert = conn.prepareStatement(insertSql)) {
+                    psInsert.setString(1, msbcdvc);
+                    psInsert.setString(2, bcd.getMsvc());
+                    psInsert.setString(3, bcd.getNamhoc());
+                    psInsert.setInt(4, bcd.getTongdiem());
+                    psInsert.setString(5, bcd.getTuxeploai());
+                    psInsert.setString(6, bcd.getCapthamquyenxeploai());
+                    psInsert.setString(7, bcd.getDuyet());
+                    psInsert.setString(8, bcd.getNhanxetctq());
+                    return psInsert.executeUpdate() > 0;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    /**
+     * Tự động sinh mã bản chấm điểm mới
+     */
+    private String generateMsbcdvc() {
+        String sql = "SELECT msbcdvc FROM bcdvc ORDER BY msbcdvc DESC LIMIT 1";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                String lastId = rs.getString("msbcdvc");
+                if (lastId != null && lastId.startsWith("BC")) {
+                    try {
+                        int num = Integer.parseInt(lastId.substring(2));
+                        return "BC" + String.format("%03d", num + 1);
+                    } catch (NumberFormatException e) {
+                        // ignore and fallback
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return "BC001";
+    }
+
+    /**
+     * Cập nhật kết quả đánh giá (ketqua) của một dòng công việc
+     */
+    public boolean updateKetQuaDanhGia(String mskhvc, String muc, String ketqua) {
+        String sql = "UPDATE chitietkhthvcgv SET ketqua = ? WHERE mskhvc = ? AND muc = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, ketqua);
+            ps.setString(2, mskhvc);
+            ps.setString(3, muc);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    /**
+     * Lấy hoặc tự động tạo mới Bảng chấm điểm đánh giá (bcdvc) của viên chức
+     */
+    public M_Bcdvc getOrCreateEvaluation(String msvc, String namhoc) {
+        M_Bcdvc b = getEvaluation(msvc, namhoc);
+        if (b == null) {
+            String msbcdvc = generateMsbcdvc();
+            String sql = "INSERT INTO bcdvc (msbcdvc, msvc, namhoc, ngay, tongdiem, tuxeploai, capthamquyenxeploai, duyet, nhanxetctq) " +
+                         "VALUES (?, ?, ?, CURRENT_DATE(), 0, '', '', '0', '')";
+            try (Connection conn = DBConnection.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setString(1, msbcdvc);
+                ps.setString(2, msvc);
+                ps.setString(3, namhoc);
+                ps.executeUpdate();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+            b = getEvaluation(msvc, namhoc);
+        }
+        return b;
+    }
+
+    public static final String[][] CRITERIA_DEFS = {
+        {"A.I", "Chính trị tư tưởng: Chấp hành đường lối, chủ trương, chính sách, pháp luật...", "5"},
+        {"A.II", "Đạo đức, lối sống: Không tham ô, lãng phí, tiêu cực, có lối sống trung thực...", "5"},
+        {"A.III", "Tác phong, lề lối làm việc: Có trách nhiệm, năng động, sáng tạo, phối hợp...", "5"},
+        {"A.IV", "Ý thức tổ chức kỷ luật: Chấp hành phân công, thực hiện nội quy, hội họp...", "5"},
+        {"B.I", "Năng lực và kỹ năng: Chủ động học tập, ứng dụng công nghệ thông tin...", "10"},
+        {"B.II.1", "Nhiệm vụ giảng dạy: Đảm bảo giờ dạy chuẩn, chấm bài, nhập điểm chính xác...", "15"},
+        {"B.II.2", "Nhiệm vụ Nghiên cứu khoa học: Đề tài khoa học, bài báo, viết sách, giáo trình...", "20"},
+        {"B.II.3", "Nhiệm vụ Phục vụ cộng đồng: Hoạt động tình nguyện, đóng góp xã hội...", "10"},
+        {"B.II.4", "Nhiệm vụ khác: Công tác hành chính khoa, tham gia hội nghị, hỗ trợ...", "15"},
+        {"B.II.5", "Điểm thưởng: Sáng kiến, giải thưởng NCKH sinh viên, ngạch hạng, bằng khen...", "10"}
+    };
+
+    /**
+     * Lấy danh sách chi tiết các dòng điểm đánh giá theo tiêu chí
+     */
+    public List<M_ChiTietDanhGia> getChiTietDanhGiaList(String msbcdvc) {
+        List<M_ChiTietDanhGia> list = new ArrayList<>();
+        String querySql = "SELECT tieuchi_id, sanpham, diem_tudanhgia, diem_ctqdanhgia FROM chitietdanhgia WHERE msbcdvc = ?";
+        String insertSql = "INSERT INTO chitietdanhgia (msbcdvc, tieuchi_id, sanpham, diem_tudanhgia, diem_ctqdanhgia) VALUES (?, ?, '', 0, 0)";
+        
+        java.util.Map<String, M_ChiTietDanhGia> map = new java.util.HashMap<>();
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(querySql)) {
+            ps.setString(1, msbcdvc);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String id = rs.getString("tieuchi_id");
+                    M_ChiTietDanhGia item = new M_ChiTietDanhGia(
+                        msbcdvc,
+                        id,
+                        rs.getString("sanpham"),
+                        rs.getFloat("diem_tudanhgia"),
+                        rs.getFloat("diem_ctqdanhgia")
+                    );
+                    map.put(id, item);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement psInsert = conn.prepareStatement(insertSql)) {
+            for (String[] def : CRITERIA_DEFS) {
+                String id = def[0];
+                M_ChiTietDanhGia item = map.get(id);
+                if (item == null) {
+                    psInsert.setString(1, msbcdvc);
+                    psInsert.setString(2, id);
+                    psInsert.executeUpdate();
+                    
+                    item = new M_ChiTietDanhGia(msbcdvc, id, "", 0.0f, 0.0f);
+                }
+                item.setTen_tieuchi(def[1]);
+                item.setDiem_toida(Float.parseFloat(def[2]));
+                list.add(item);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    /**
+     * Cập nhật điểm tự đánh giá của cá nhân viên chức
+     */
+    public boolean updateChiTietDanhGiaTuDanhGia(M_ChiTietDanhGia item) {
+        String sql = "UPDATE chitietdanhgia SET sanpham = ?, diem_tudanhgia = ? WHERE msbcdvc = ? AND tieuchi_id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, item.getSanpham());
+            ps.setFloat(2, item.getDiem_tudanhgia());
+            ps.setString(3, item.getMsbcdvc());
+            ps.setString(4, item.getTieuchi_id());
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    /**
+     * Cập nhật điểm của cấp thẩm quyền đánh giá
+     */
+    public boolean updateChiTietDanhGiaCtqDanhGia(M_ChiTietDanhGia item) {
+        String sql = "UPDATE chitietdanhgia SET diem_ctqdanhgia = ? WHERE msbcdvc = ? AND tieuchi_id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setFloat(1, item.getDiem_ctqdanhgia());
+            ps.setString(2, item.getMsbcdvc());
+            ps.setString(3, item.getTieuchi_id());
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 }

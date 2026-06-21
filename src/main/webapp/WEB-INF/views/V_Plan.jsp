@@ -110,9 +110,25 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
             <a class="navbar-brand fw-bold" href="home">Hệ Thống QLVC</a>
-            <div class="navbar-nav ms-auto">
-                <span class="navbar-text me-3 text-light">Xin chào, <strong><%= vc.getHoten() %></strong></span>
-                <a class="btn btn-outline-light btn-sm rounded-pill px-3" href="login?action=logout">Đăng xuất</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarVienChuc">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarVienChuc">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link active fw-bold text-warning" href="kehoach?namhoc=<%= response.encodeURL(selectedNamHoc) %>">Lập Kế Hoạch</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="thuchien?namhoc=<%= response.encodeURL(selectedNamHoc) %>">Báo Cáo Thực Hiện</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="danhgia?namhoc=<%= response.encodeURL(selectedNamHoc) %>">Tự Đánh Giá</a>
+                    </li>
+                </ul>
+                <div class="navbar-nav ms-auto align-items-center">
+                    <span class="navbar-text me-3 text-light">Xin chào, <strong><%= vc.getHoten() %></strong></span>
+                    <a class="btn btn-outline-light btn-sm rounded-pill px-3" href="login?action=logout">Đăng xuất</a>
+                </div>
             </div>
         </div>
     </nav>
@@ -166,7 +182,6 @@
                 </div>
             <% } else { %>
                 <!-- Đăng ký danh hiệu & Trạng thái duyệt -->
-                <div class="card bg-light border-0 mb-4 shadow-sm">
                     <div class="card-body py-3 px-4">
                         <div class="row align-items-center mb-3">
                             <div class="col-md-6">
@@ -184,11 +199,18 @@
                             <input type="hidden" name="namhoc" value="<%= selectedNamHoc %>">
                             <div class="col-md-4">
                                 <label class="form-label fw-semibold text-secondary mb-1">Đăng ký Danh hiệu thi đua:</label>
-                                <input type="text" name="danhhieu" class="form-control form-control-sm" value="<%= header.getDanhhieu() != null ? header.getDanhhieu() : "" %>" <%= "1".equals(header.getDuyet()) ? "readonly" : "" %>>
+                                <% String currentDH = header.getDanhhieu() != null ? header.getDanhhieu() : ""; %>
+                                <select name="danhhieu" class="form-select form-select-sm" <%= "1".equals(header.getDuyet()) ? "disabled" : "" %>>
+                                    <option value="" <%= currentDH.isEmpty() ? "selected" : "" %>>-- Chọn danh hiệu --</option>
+                                    <option value="Lao động tiên tiến" <%= "Lao động tiên tiến".equals(currentDH) ? "selected" : "" %>>Lao động tiên tiến</option>
+                                    <option value="Chiến sĩ thi đua cấp cơ sở" <%= "Chiến sĩ thi đua cấp cơ sở".equals(currentDH) ? "selected" : "" %>>Chiến sĩ thi đua cấp cơ sở</option>
+                                    <option value="Chiến sĩ thi đua cấp Bộ" <%= "Chiến sĩ thi đua cấp Bộ".equals(currentDH) ? "selected" : "" %>>Chiến sĩ thi đua cấp Bộ</option>
+                                    <option value="Chiến sĩ thi đua toàn quốc" <%= "Chiến sĩ thi đua toàn quốc".equals(currentDH) ? "selected" : "" %>>Chiến sĩ thi đua toàn quốc</option>
+                                </select>
                             </div>
                             <div class="col-md-5">
                                 <label class="form-label fw-semibold text-secondary mb-1">Đăng ký Khen thưởng:</label>
-                                <input type="text" name="khenthuong" class="form-control form-control-sm" value="<%= header.getKhenthuong() != null ? header.getKhenthuong() : "" %>" <%= "1".equals(header.getDuyet()) ? "readonly" : "" %>>
+                                <input type="text" name="khenthuong" class="form-control form-control-sm" value="<%= header.getKhenthuong() != null ? header.getKhenthuong() : "" %>" <%= "1".equals(header.getDuyet()) ? "readonly" : "" %> placeholder="Bằng khen, giấy khen...">
                             </div>
                             <% if (!"1".equals(header.getDuyet())) { %>
                                 <div class="col-md-3">
@@ -201,6 +223,14 @@
 
                 <!-- Bảng chi tiết kế hoạch -->
                 <div class="table-responsive">
+                    <%
+                        boolean isApproved = "1".equals(header.getDuyet());
+                        if (isApproved) {
+                    %>
+                        <div class="alert alert-info border-0 shadow-sm mb-4">
+                            <strong>Thông báo:</strong> Kế hoạch đã được phê duyệt. Tất cả các cột kế hoạch đã bị khóa (chỉ đọc) và không thể chỉnh sửa.
+                        </div>
+                    <% } %>
                     <table class="table table-hover plan-table align-middle">
                         <thead>
                             <tr>
@@ -226,29 +256,33 @@
                                     <td class="text-center font-monospace fw-semibold text-secondary"><%= stt++ %></td>
                                     <td class="text-center font-monospace fw-semibold"><%= muc %></td>
                                     <td>
-                                        <textarea id="congviec_<%= muc %>" class="form-control form-control-sm table-input" rows="2"><%= d.getCongviec() %></textarea>
+                                        <textarea id="congviec_<%= muc %>" class="form-control form-control-sm table-input" rows="2" <%= isApproved ? "readonly" : "" %>><%= d.getCongviec() %></textarea>
                                     </td>
                                     <td>
-                                        <textarea id="kehoachthuchien_<%= muc %>" class="form-control form-control-sm table-input" rows="2"><%= d.getKehoachthuchien() %></textarea>
+                                        <textarea id="kehoachthuchien_<%= muc %>" class="form-control form-control-sm table-input" rows="2" <%= isApproved ? "readonly" : "" %>><%= d.getKehoachthuchien() %></textarea>
                                     </td>
                                     <td>
-                                        <input type="text" id="chitieu_<%= muc %>" class="table-input" value="<%= d.getChitieu() %>">
+                                        <input type="text" id="chitieu_<%= muc %>" class="table-input" value="<%= d.getChitieu() %>" <%= isApproved ? "readonly" : "" %>>
                                     </td>
                                     <td>
-                                        <input type="text" id="thoigiankh_<%= muc %>" class="table-input" value="<%= d.getThoigiankh() %>">
+                                        <input type="text" id="thoigiankh_<%= muc %>" class="table-input" value="<%= d.getThoigiankh() %>" <%= isApproved ? "readonly" : "" %>>
                                     </td>
                                     <td>
-                                        <textarea id="sanphamkh_<%= muc %>" class="form-control form-control-sm table-input" rows="2"><%= d.getSanphamkh() %></textarea>
+                                        <textarea id="sanphamkh_<%= muc %>" class="form-control form-control-sm table-input" rows="2" <%= isApproved ? "readonly" : "" %>><%= d.getSanphamkh() %></textarea>
                                     </td>
                                     <td>
-                                        <input type="text" id="ghichu_<%= muc %>" class="table-input" value="<%= d.getGhichu() %>">
+                                        <input type="text" id="ghichu_<%= muc %>" class="table-input" value="<%= d.getGhichu() %>" <%= isApproved ? "readonly" : "" %>>
                                     </td>
                                     <td class="text-center">
                                         <input type="checkbox" id="kiemtra_<%= muc %>" class="form-check-input" <%= "1".equals(d.getKiemtra()) ? "checked" : "" %> disabled>
                                     </td>
                                     <td>
                                         <div class="d-flex flex-column gap-1">
-                                            <button class="btn btn-update btn-sm rounded" onclick="updateRow('<%= header.getMskhvc() %>', '<%= muc %>')">Update</button>
+                                            <% if (isApproved) { %>
+                                                <button class="btn btn-secondary btn-sm rounded" disabled>Đã khóa</button>
+                                            <% } else { %>
+                                                <button class="btn btn-update btn-sm rounded" onclick="updateRow('<%= header.getMskhvc() %>', '<%= muc %>')">Update</button>
+                                            <% } %>
                                         </div>
                                     </td>
                                 </tr>

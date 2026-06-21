@@ -1,7 +1,7 @@
 package com.example.model;
 
 /**
- * Model đại diện cho thông tin Bảng đánh giá / chấm điểm viên chức (bcdvc)
+ * Model đại diện cho Bản chấm điểm viên chức (bcdvc)
  */
 public class M_Bcdvc {
     private String msbcdvc;
@@ -13,15 +13,16 @@ public class M_Bcdvc {
     private String capthamquyenxeploai;
     private String duyet;
     private String nhanxetctq;
-
-    // Join fields for display convenience
+    
+    // Các trường bổ sung phục vụ hiển thị
     private String hoten;
     private String tenchucvu;
     private String tendonvi;
 
     public M_Bcdvc() {}
 
-    public M_Bcdvc(String msbcdvc, String msvc, String namhoc, String ngay, int tongdiem, String tuxeploai, String capthamquyenxeploai, String duyet, String nhanxetctq) {
+    public M_Bcdvc(String msbcdvc, String msvc, String namhoc, String ngay, int tongdiem, 
+                   String tuxeploai, String capthamquyenxeploai, String duyet, String nhanxetctq) {
         this.msbcdvc = msbcdvc;
         this.msvc = msvc;
         this.namhoc = namhoc;
