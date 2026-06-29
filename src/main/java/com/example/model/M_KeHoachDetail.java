@@ -21,6 +21,7 @@ public class M_KeHoachDetail {
     private String minhchung;
     private String tuxacnhan;
     private String donvixacnhan;
+    private String danhgia;
 
     public M_KeHoachDetail() {}
 
@@ -101,4 +102,7 @@ public class M_KeHoachDetail {
 
     public String getDonvixacnhan() { return donvixacnhan; }
     public void setDonvixacnhan(String donvixacnhan) { this.donvixacnhan = donvixacnhan; }
+
+    public String getDanhgia() { return danhgia; }
+    public void setDanhgia(String danhgia) { this.danhgia = danhgia; }
 }

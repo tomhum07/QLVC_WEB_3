@@ -117,6 +117,12 @@
                             <i class="bi bi-star me-2"></i>Đánh Giá Viên Chức
                         </button>
 
+                        <!-- Nút mới: Quản Lý Kết Quả -->
+                        <button class="btn btn-outline-danger btn-lg px-4 fw-semibold" 
+                                onclick="window.location.href='quanlyketqua'">
+                            <i class="bi bi-shield-check me-2"></i>Quản Lý Kết Quả
+                        </button>
+
                         <!-- Nút 5: Thống Kê Đánh Giá -->
                         <button class="btn btn-outline-info btn-lg px-4 text-dark fw-semibold" 
                                 onclick="window.location.href='thongke'">

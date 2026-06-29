@@ -124,6 +124,9 @@
                     <li class="nav-item">
                         <a class="nav-link" href="danhgia?namhoc=<%= response.encodeURL(selectedNamHoc) %>">Tự Đánh Giá</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="ketqua?namhoc=<%= response.encodeURL(selectedNamHoc) %>">Kết Quả</a>
+                    </li>
                 </ul>
                 <div class="navbar-nav ms-auto align-items-center">
                     <span class="navbar-text me-3 text-light">Xin chào, <strong><%= vc.getHoten() %></strong></span>

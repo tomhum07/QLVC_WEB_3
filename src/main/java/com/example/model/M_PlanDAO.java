@@ -135,7 +135,7 @@ public class M_PlanDAO {
     public List<M_KeHoachDetail> getKeHoachDetails(String mskhvc) {
         List<M_KeHoachDetail> list = new ArrayList<>();
         String sql = "SELECT mskhvc, muc, congviec, kehoachthuchien, chitieu, thoigiankh, sanphamkh, ghichu, kiemtra, " +
-                     "thoigianth, sanphamth, ketqua, minhchung, tuxacnhan, donvixacnhan " +
+                     "thoigianth, sanphamth, ketqua, minhchung, tuxacnhan, donvixacnhan, danhgia " +
                      "FROM chitietkhthvcgv " +
                      "WHERE mskhvc = ? " +
                      "ORDER BY muc";
@@ -144,7 +144,7 @@ public class M_PlanDAO {
             ps.setString(1, mskhvc);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    list.add(new M_KeHoachDetail(
+                    M_KeHoachDetail d = new M_KeHoachDetail(
                         rs.getString("mskhvc"),
                         rs.getString("muc"),
                         rs.getString("congviec"),
@@ -160,7 +160,9 @@ public class M_PlanDAO {
                         rs.getString("minhchung"),
                         rs.getString("tuxacnhan"),
                         rs.getString("donvixacnhan")
-                    ));
+                    );
+                    d.setDanhgia(rs.getString("danhgia"));
+                    list.add(d);
                 }
             }
         } catch (SQLException e) {
@@ -656,16 +658,9 @@ public class M_PlanDAO {
     }
 
     public static final String[][] CRITERIA_DEFS = {
-        {"A.I", "Chính trị tư tưởng: Chấp hành đường lối, chủ trương, chính sách, pháp luật...", "5"},
-        {"A.II", "Đạo đức, lối sống: Không tham ô, lãng phí, tiêu cực, có lối sống trung thực...", "5"},
-        {"A.III", "Tác phong, lề lối làm việc: Có trách nhiệm, năng động, sáng tạo, phối hợp...", "5"},
-        {"A.IV", "Ý thức tổ chức kỷ luật: Chấp hành phân công, thực hiện nội quy, hội họp...", "5"},
-        {"B.I", "Năng lực và kỹ năng: Chủ động học tập, ứng dụng công nghệ thông tin...", "10"},
-        {"B.II.1", "Nhiệm vụ giảng dạy: Đảm bảo giờ dạy chuẩn, chấm bài, nhập điểm chính xác...", "15"},
-        {"B.II.2", "Nhiệm vụ Nghiên cứu khoa học: Đề tài khoa học, bài báo, viết sách, giáo trình...", "20"},
-        {"B.II.3", "Nhiệm vụ Phục vụ cộng đồng: Hoạt động tình nguyện, đóng góp xã hội...", "10"},
-        {"B.II.4", "Nhiệm vụ khác: Công tác hành chính khoa, tham gia hội nghị, hỗ trợ...", "15"},
-        {"B.II.5", "Điểm thưởng: Sáng kiến, giải thưởng NCKH sinh viên, ngạch hạng, bằng khen...", "10"}
+        {"1", "Giảng dạy", "15"},
+        {"2", "Nghiên cứu khoa học", "20"},
+        {"3", "Phục vụ cộng đồng", "10"}
     };
 
     /**
@@ -747,6 +742,23 @@ public class M_PlanDAO {
             ps.setFloat(1, item.getDiem_ctqdanhgia());
             ps.setString(2, item.getMsbcdvc());
             ps.setString(3, item.getTieuchi_id());
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    /**
+     * Cập nhật xếp loại đánh giá cho từng mục kế hoạch - thực hiện
+     */
+    public boolean updateKeHoachDetailDanhGia(String mskhvc, String muc, String danhgia) {
+        String sql = "UPDATE chitietkhthvcgv SET danhgia = ? WHERE mskhvc = ? AND muc = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, danhgia);
+            ps.setString(2, mskhvc);
+            ps.setString(3, muc);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();
